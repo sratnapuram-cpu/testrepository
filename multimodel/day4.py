@@ -125,9 +125,7 @@ def process_audio_with_lex(audio_path, lex_client):
 
 def main():
 
-    os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA36MICL4BSOEH5WRN'
-    os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
-    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+ 
 
     st.title("\U0001F680 AWS Services Integration App")
 
