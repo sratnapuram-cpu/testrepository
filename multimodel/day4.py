@@ -6,7 +6,7 @@ import requests
 import io
 from PIL import Image
 import os
-import sounddevice as sd
+#import sounddevice as sd
 import soundfile as sf
 import tempfile
 from PyPDF2 import PdfReader
