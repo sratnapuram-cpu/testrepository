@@ -9,7 +9,9 @@ import os
 import sounddevice as sd
 import soundfile as sf
 import tempfile
-
+from PyPDF2 import PdfReader
+from dotenv import load_dotenv
+load_dotenv()
 # Configure page
 st.set_page_config(
     page_title="AWS Services Integration",
@@ -122,11 +124,17 @@ def process_audio_with_lex(audio_path, lex_client):
         return response.get("inputTranscript", "No text recognized"), response.get("audioStream")
     except Exception as e:
         return f"Error processing audio with Lex: {str(e)}", None
+    
+def ask_question_about_pdf(pdf_file, question, bedrock_client):
+    try:
+        reader = PdfReader(pdf_file)
+        text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+        prompt = f"Here is a document: {text[:4000]}. Now answer the question: {question}"
+        return generate_text(prompt, bedrock_client)
+    except Exception as e:
+        return f"Error processing PDF: {str(e)}"
 
 def main():
-
- 
-
     st.title("\U0001F680 AWS Services Integration App")
 
     bedrock_client, lambda_client, lex_client = get_aws_clients()
@@ -134,7 +142,7 @@ def main():
         st.error("AWS client init failed.")
         return
 
-    tab1, tab2 = st.tabs(["\U0001F4DD Text Input", "\U0001F3A4 Audio Input"])
+    tab1, tab2, tab3 = st.tabs(["\U0001F4DD Text Input", "\U0001F3A4 Audio Input", "\U0001F3A4 PdfReader"])
 
     with tab1:
         st.header("Text Input Processing")
@@ -170,12 +178,21 @@ def main():
                 audio_path = record_audio(duration)
                 recognized_text, audio_response = process_audio_with_lex(audio_path, lex_client)
                 if not recognized_text.startswith("Error"):
-                    st.success(f"Recognized: {recognized_text}")
+                    # st.success(f"Recognized: {recognized_text}")
                     if audio_response:
                         audio_data = audio_response.read()
                         st.audio(audio_data, format='audio/mp3')
                 else:
                     st.error(recognized_text)
+
+    with tab3:
+        st.header("Ask a Question About a PDF")
+        pdf_file = st.file_uploader("Upload a PDF", type=['pdf'])
+        question = st.text_input("Ask a question about the PDF")
+        if st.button("Ask About PDF") and pdf_file and question:
+            result = ask_question_about_pdf(pdf_file, question, bedrock_client)
+            st.write(result)
+
 
 if __name__ == "__main__":
     main()
